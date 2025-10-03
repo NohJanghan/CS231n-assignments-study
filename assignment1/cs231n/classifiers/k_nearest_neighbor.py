@@ -75,7 +75,9 @@ class KNearestNeighbor(object):
                 # training point, and store the result in dists[i, j]. You should   #
                 # not use a loop over dimension, nor use np.linalg.norm().          #
                 #####################################################################
-                pass
+                x = self.X_train[j]
+                y = X[i]
+                dists[i, j] = np.sum((x - y) ** 2)
         return dists
 
     def compute_distances_one_loop(self, X):
@@ -95,7 +97,7 @@ class KNearestNeighbor(object):
             # points, and store the result in dists[i, :].                        #
             # Do not use np.linalg.norm().                                        #
             #######################################################################
-            pass
+            dists[i, :] = np.sum((X[i] - self.X_train) ** 2, axis=1)
         return dists
 
     def compute_distances_no_loops(self, X):
@@ -121,6 +123,9 @@ class KNearestNeighbor(object):
         # HINT: Try to formulate the l2 distance using matrix multiplication    #
         #       and two broadcast sums.                                         #
         #########################################################################
+        x = X
+        y = self.X_train
+        dists = np.sum(x**2, axis=1)[:, np.newaxis] - 2 * x@y.T + np.sum(y**2, axis=1)[np.newaxis, :]
 
         return dists
 
@@ -150,6 +155,8 @@ class KNearestNeighbor(object):
             # neighbors. Store these labels in closest_y.                           #
             # Hint: Look up the function numpy.argsort.                             #
             #########################################################################
+            sorted_indice = np.argsort(dists[i])
+            closest_y.extend(self.y_train[sorted_indice[:k]])
 
 
             #########################################################################
@@ -159,6 +166,8 @@ class KNearestNeighbor(object):
             # Store this label in y_pred[i]. Break ties by choosing the smaller     #
             # label.                                                                #
             #########################################################################
+            classes, counts = np.unique(closest_y, return_counts=True)
+            y_pred[i] = classes[np.argmax(counts)]
 
 
         return y_pred
