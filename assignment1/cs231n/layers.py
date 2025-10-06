@@ -27,6 +27,8 @@ def affine_forward(x, w, b):
     # TODO: Implement the affine forward pass. Store the result in out. You   #
     # will need to reshape the input into rows.                               #
     ###########################################################################
+    x_reshape = x.reshape(x.shape[0], -1)
+    out = x_reshape @ w + b
 
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -56,6 +58,11 @@ def affine_backward(dout, cache):
     ###########################################################################
     # TODO: Implement the affine backward pass.                               #
     ###########################################################################
+    dx = dout @ w.T
+    dx = dx.reshape(x.shape)
+    x_reshape = x.reshape(x.shape[0], -1)
+    dw = x_reshape.T @ dout
+    db = np.sum(dout, axis=0)
 
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -78,6 +85,7 @@ def relu_forward(x):
     ###########################################################################
     # TODO: Implement the ReLU forward pass.                                  #
     ###########################################################################
+    out = np.maximum(0, x)
 
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -101,6 +109,8 @@ def relu_backward(dout, cache):
     ###########################################################################
     # TODO: Implement the ReLU backward pass.                                 #
     ###########################################################################
+    dx = np.where(x >= 0, 1, 0)
+    dx = dx * dout
 
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -714,6 +724,14 @@ def softmax_loss(x, y):
     ###########################################################################
     # TODO: Copy over your solution from A1.
     ###########################################################################
+    x = x - np.max(x, axis=1, keepdims=True)
+    p = np.exp(x)
+    p = p / np.sum(p, axis=1, keepdims=True)
+    true_label_indices = np.eye(p.shape[1], dtype=bool)[y]
+    loss = np.mean(-np.log(p[true_label_indices]))
+
+    delta = np.eye(p.shape[1], dtype=int)[y]
+    dx = (p - delta) / p.shape[0]
 
     ###########################################################################
     #                             END OF YOUR CODE                            #

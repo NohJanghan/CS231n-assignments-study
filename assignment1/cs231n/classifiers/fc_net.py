@@ -54,6 +54,10 @@ class TwoLayerNet(object):
         # and biases using the keys 'W1' and 'b1' and second layer                 #
         # weights and biases using the keys 'W2' and 'b2'.                         #
         ############################################################################
+        self.params['W1'] = np.random.randn(input_dim, hidden_dim) * weight_scale
+        self.params['b1'] = 0
+        self.params['W2'] = np.random.randn(hidden_dim, num_classes) * weight_scale
+        self.params['b2'] = 0
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -83,6 +87,11 @@ class TwoLayerNet(object):
         # TODO: Implement the forward pass for the two-layer net, computing the    #
         # class scores for X and storing them in the scores variable.              #
         ############################################################################
+        a1, a1_cache = affine_forward(X, self.params['W1'], self.params['b1'])
+        z1, z1_cache = relu_forward(a1)
+        a2, a2_cache = affine_forward(z1, self.params['W2'], self.params['b2'])
+        z2, z2_cache = relu_forward(a2)
+        scores = z2
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -104,6 +113,24 @@ class TwoLayerNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
 
+        loss, dz2 = softmax_loss(z2, y)
+        da2 = relu_backward(dz2, z2_cache)
+        dz1, dW2, db2 = affine_backward(da2, a2_cache)
+        da1 = relu_backward(dz1, z1_cache)
+        dX, dW1, db1 = affine_backward(da1, a1_cache)
+
+        squared_sum_params = 0
+        # bias는 정규화에 포함하지 않아야함.
+        for key in ('W1', 'W2'):
+           squared_sum_params += np.sum(self.params[key] ** 2)
+        loss += 0.5 * self.reg * squared_sum_params
+
+        grads = {
+            'W1': dW1 + self.reg * self.params['W1'],
+            'b1': db1,
+            'W2': dW2 + self.reg * self.params['W2'],
+            'b2': db2
+        }
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -116,7 +143,7 @@ class TwoLayerNet(object):
       params = self.params
       np.save(fpath, params)
       print(fname, "saved.")
-    
+
     def load(self, fname):
       """Load model parameters."""
       fpath = os.path.join(os.path.dirname(__file__), "../saved/", fname)
@@ -228,7 +255,7 @@ class FullyConnectedNet(object):
 
     def loss(self, X, y=None):
         """Compute loss and gradient for the fully connected net.
-        
+
         Inputs:
         - X: Array of input data of shape (N, d_1, ..., d_k)
         - y: Array of labels, of shape (N,). y[i] gives the label for X[i].
@@ -304,7 +331,7 @@ class FullyConnectedNet(object):
       params = self.params
       np.save(fpath, params)
       print(fname, "saved.")
-    
+
     def load(self, fname):
       """Load model parameters."""
       fpath = os.path.join(os.path.dirname(__file__), "../saved/", fname)
