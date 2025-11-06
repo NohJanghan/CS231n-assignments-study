@@ -187,7 +187,15 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # Referencing the original paper (https://arxiv.org/abs/1502.03167)   #
         # might prove to be helpful.                                          #
         #######################################################################
-        pass
+        out = (x - np.mean(x, axis=0, keepdims=True)) / (eps + np.std(x, axis=0, keepdims=True))
+        out = x * gamma + beta
+
+        running_mean = momentum * running_mean + (1 - momentum) * np.mean(x, axis=0, keepdims=True)
+        running_var = momentum * running_var + (1 - momentum) * np.var(x, axis=0, keepdims=True)
+
+        cache = {'x': x,
+                 'gamma': gamma}
+
         #######################################################################
         #                           END OF YOUR CODE                          #
         #######################################################################
@@ -198,7 +206,9 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # then scale and shift the normalized data using gamma and beta.      #
         # Store the result in the out variable.                               #
         #######################################################################
-        pass
+        out = (x - running_mean) / (eps + running_var**0.5)
+        out = x * gamma + beta
+
         #######################################################################
         #                          END OF YOUR CODE                           #
         #######################################################################
@@ -236,6 +246,12 @@ def batchnorm_backward(dout, cache):
     # Referencing the original paper (https://arxiv.org/abs/1502.03167)       #
     # might prove to be helpful.                                              #
     ###########################################################################
+    x = cache['x']
+    gamma = cache['gamma']
+
+    dx = dout * gamma
+    dgamma = np.sum(dout * x, axis=0)
+    dbeta = np.sum(dout, axis=0)
 
     ###########################################################################
     #                             END OF YOUR CODE                            #
