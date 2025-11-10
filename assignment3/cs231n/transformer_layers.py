@@ -36,6 +36,11 @@ class PositionalEncoding(nn.Module):
         # this is what the autograder is expecting. For reference, our solution is #
         # less than 5 lines of code.                                               #
         ############################################################################
+        i = torch.arange(max_len)[:, torch.newaxis]
+        pows = -torch.arange(0, embed_dim, 2) / embed_dim
+
+        pe[0,:, 0::2] = torch.sin(i * torch.pow(10000, pows))
+        pe[0,:, 1::2] = torch.cos(i * torch.pow(10000, pows))
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -64,6 +69,8 @@ class PositionalEncoding(nn.Module):
         # appropriate ones to the input sequence. Don't forget to apply dropout    #
         # afterward. This should only take a few lines of code.                    #
         ############################################################################
+        output = x + self.pe[:, :S]
+        output = self.dropout(output)
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -109,7 +116,7 @@ class MultiHeadAttention(nn.Module):
         self.query = nn.Linear(embed_dim, embed_dim)
         self.value = nn.Linear(embed_dim, embed_dim)
         self.proj = nn.Linear(embed_dim, embed_dim)
-        
+
         self.attn_drop = nn.Dropout(dropout)
 
         self.n_head = num_heads
@@ -155,6 +162,22 @@ class MultiHeadAttention(nn.Module):
         #     prevent a value from influencing output. Specifically, the PyTorch   #
         #     function masked_fill may come in handy.                              #
         ############################################################################
+        H = self.n_head
+        EH = self.head_dim
+        query = self.query(query).reshape(N, S, H, EH).permute(0, 2, 1, 3) #N,H,S,EH
+        key = self.key(key).reshape(N, T, H, EH).permute(0, 2, 1, 3)
+        value = self.value(value).reshape(N, T, H, EH).permute(0, 2, 1, 3)
+
+        attention_weight = query @ key.transpose(3, 2) / math.sqrt(EH) # shape: N, H, S, T
+        if attn_mask is not None:
+            attention_weight = attention_weight.masked_fill(attn_mask == 0, -torch.inf)
+
+        attention_weight = F.softmax(attention_weight, -1) # T
+        # attention_weight = self.attn_drop(attention_weight)
+
+        output = attention_weight @ value # shape: N, H, S, EH
+        output = output.permute(0, 2, 1, 3).reshape(N, S, E)
+        output = self.proj(output)
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -252,6 +275,17 @@ class TransformerDecoderLayer(nn.Module):
         # memory, and (2) the feedforward block. Each block should follow the      #
         # same structure as self-attention implemented just above.                 #
         ############################################################################
+        shortcut = tgt
+        tgt = self.cross_attn(query=tgt, key=memory, value=memory)
+        tgt = self.dropout_cross(tgt)
+        tgt = tgt + shortcut
+        tgt = self.norm_cross(tgt)
+
+        shortcut = tgt
+        tgt = self.ffn(tgt)
+        tgt = self.dropout_ffn(tgt)
+        tgt = tgt + shortcut
+        tgt = self.norm_ffn(tgt)
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -311,6 +345,9 @@ class PatchEmbedding(nn.Module):
         # step. Once the patches are flattened, embed them into latent vectors     #
         # using the projection layer.                                              #
         ############################################################################
+        x = x.reshape(N, self.num_patches, -1)
+        out = self.proj(x)
+
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -359,6 +396,17 @@ class TransformerEncoderLayer(nn.Module):
         # TODO: Implement the encoder layer by applying self-attention followed    #
         # by a feedforward block. This code will be very similar to decoder layer. #
         ############################################################################
+        shortcut = src
+        src = self.self_attn(query=src, key=src, value=src, attn_mask=src_mask)
+        src = self.dropout_self(src)
+        src = src + shortcut
+        src = self.norm_self(src)
+
+        shortcut = src
+        src = self.ffn(src)
+        src = self.dropout_ffn(src)
+        src = src + shortcut
+        src = self.norm_self(src)
 
         ############################################################################
         #                             END OF YOUR CODE                             #

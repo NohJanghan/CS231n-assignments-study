@@ -88,6 +88,16 @@ class CaptioningTransformer(nn.Module):
         #  3) Finally, apply the decoder features on the text & image embeddings   #
         #     along with the tgt_mask. Project the output to scores per token      #
         ############################################################################
+        # shape: [N, T] --> [N, T, W]
+        cap = self.embedding(captions)
+        cap = self.positional_encoding(cap)
+        # shape: [N, D] --> [N, W] --> [N, 1, W]
+        vis = self.visual_projection(features).unsqueeze(1)
+
+        tgt_mask = torch.tril(torch.ones(T, T))
+
+        tgt = self.transformer(cap, vis, tgt_mask=tgt_mask)
+        scores = self.output(tgt)
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -230,7 +240,7 @@ class VisionTransformer(nn.Module):
         """
         N = x.size(0)
         logits = torch.zeros(N, self.num_classes, device=x.device)
-        
+
         ############################################################################
         # TODO: Implement the forward pass of the Vision Transformer.             #
         # 1. Convert the input image into a sequence of patch vectors.            #
@@ -240,6 +250,14 @@ class VisionTransformer(nn.Module):
         #    You may find torch.mean useful.                                      #
         # 5. Feed it through a linear layer to produce class logits.              #
         ############################################################################
+        # shape: [N, C, H, W] --> [N, P, E] --> [N, P, E]
+        out = self.patch_embed(x)
+        out = self.positional_encoding(out)
+        out = self.transformer(out)
+
+        # shape --> [N, E]
+        out = torch.mean(out, dim=1)
+        logits = self.head(out)
 
         ############################################################################
         #                             END OF YOUR CODE                             #
