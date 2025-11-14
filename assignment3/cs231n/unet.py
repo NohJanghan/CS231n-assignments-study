@@ -180,6 +180,11 @@ class Unet(nn.Module):
             # Make sure to exactly follow this structure of ModuleList in order to
             # load a pretrained checkpoint.
             ##################################################################
+            down_block = nn.ModuleList([
+                ResnetBlock(dim_in, dim_in, context_dim=context_dim),
+                ResnetBlock(dim_in, dim_in, context_dim=context_dim),
+                Downsample(dim_in, dim_out)
+            ])
 
             ##################################################################
             self.downs.append(down_block)
@@ -204,6 +209,11 @@ class Unet(nn.Module):
             # Don't forget to account for the skip connections by having 2 x dim_out
             # channels at the input of both ResnetBlocks.
             ##################################################################
+            up_block = nn.ModuleList([
+                Upsample(dim_in, dim_out),
+                ResnetBlock(dim_out*2, dim_out, context_dim=context_dim),
+                ResnetBlock(dim_out*2, dim_out, context_dim=context_dim)
+            ])
 
             self.ups.append(up_block)
             ##################################################################
@@ -226,6 +236,9 @@ class Unet(nn.Module):
         # You will have to call self.forward two times.
         # For unconditional sampling, pass None in`text_emb`.
         ##################################################################
+        x_cond = self.forward(x, time, model_kwargs=model_kwargs)
+        x_uncond = self.forward(x, time, model_kwargs={**model_kwargs, "text_emb": None})
+        x = (cfg_scale + 1) * x_cond - cfg_scale * x_uncond
 
         ##################################################################
 
@@ -281,6 +294,31 @@ class Unet(nn.Module):
         #      skip connection from the downsampling path.
         #    - Make sure to pass the context to each ResNet block.
         ##################################################################
+        down_outputs = []
+        for down_layer in self.downs:
+            block_outs = []
+            for block in down_layer:
+                if isinstance(block, ResnetBlock):
+                    x = block(x, context=context)
+                    block_outs.append(x)
+                else:
+                    x = block(x)
+            down_outputs.append(block_outs)
+
+        # mid
+        x = self.mid_block1(x, context=context)
+        x = self.mid_block2(x, context=context)
+
+        for i, up_layer in enumerate(self.ups):
+            j = 0
+            for block in up_layer:
+                if isinstance(block, ResnetBlock):
+                    skip_con = down_outputs[-i-1][-j-1]
+                    block_in = torch.cat((x, skip_con), dim=1)
+                    x = block(block_in, context=context)
+                    j += 1
+                else:
+                    x = block(x)
 
         ##################################################################
 
