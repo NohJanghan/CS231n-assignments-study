@@ -296,3 +296,4 @@ assignment3/cs231n/datasets/coco_captioning
 assignment3/data
 assignment3/cs231n/datasets/*
 assignment3/pretrained_model
+assignment3/cs231n/exp/pretrained
