@@ -173,7 +173,7 @@ class MultiHeadAttention(nn.Module):
             attention_weight = attention_weight.masked_fill(attn_mask == 0, -torch.inf)
 
         attention_weight = F.softmax(attention_weight, -1) # T
-        # attention_weight = self.attn_drop(attention_weight)
+        attention_weight = self.attn_drop(attention_weight)
 
         output = attention_weight @ value # shape: N, H, S, EH
         output = output.permute(0, 2, 1, 3).reshape(N, S, E)
@@ -345,10 +345,12 @@ class PatchEmbedding(nn.Module):
         # step. Once the patches are flattened, embed them into latent vectors     #
         # using the projection layer.                                              #
         ############################################################################
+        P = self.patch_size
+        x = x.reshape(N, C, H // P, P, W // P, P)
+        x = x.permute(0, 2, 4, 1, 3, 5)
         x = x.reshape(N, self.num_patches, -1)
+
         out = self.proj(x)
-
-
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################

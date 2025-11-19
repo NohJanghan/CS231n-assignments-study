@@ -94,7 +94,7 @@ class CaptioningTransformer(nn.Module):
         # shape: [N, D] --> [N, W] --> [N, 1, W]
         vis = self.visual_projection(features).unsqueeze(1)
 
-        tgt_mask = torch.tril(torch.ones(T, T))
+        tgt_mask = torch.tril(torch.ones(T, T, device=captions.device))
 
         tgt = self.transformer(cap, vis, tgt_mask=tgt_mask)
         scores = self.output(tgt)
