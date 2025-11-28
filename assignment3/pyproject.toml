@@ -3,11 +3,13 @@ name = "assignment3"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 dependencies = [
     "clip",
     "cython>=3.1.4",
     "einops>=0.8.1",
+    "eva-decord>=0.6.1",
+    "ftfy>=6.3.1",
     "future>=1.0.0",
     "h5py>=3.15.1",
     "imageio>=2.37.0",
@@ -17,10 +19,15 @@ dependencies = [
     "jupyter>=1.1.1",
     "matplotlib>=3.10.6",
     "numpy>=2.3.3",
+    "opencv-python>=4.11.0.86",
     "pandas>=2.3.3",
+    "regex>=2025.11.3",
+    "scikit-learn>=1.7.2",
     "scipy>=1.16.2",
     "six>=1.17.0",
     "tabulate>=0.9.0",
+    "tensorflow>=2.20.0",
+    "tensorflow-datasets>=4.9.9",
     "thop>=0.1.1.post2209072238",
     "torch>=2.9.0",
     "torchvision>=0.24.0",
