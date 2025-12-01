@@ -292,6 +292,7 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/macos,windows,linux,visualstudiocode,python,venv,jupyternotebooks
 assignment1/cs231n/datasets
 assignment1/cs231n/saved
+assignment2/cs231n/datasets
 assignment3/cs231n/datasets/coco_captioning
 assignment3/data
 assignment3/cs231n/datasets/*
