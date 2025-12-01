@@ -169,9 +169,8 @@ class FullyConnectedNet(object):
 
             last_out, cache['relu' + str(i+1)] = relu_forward(last_out)
 
-            # TODO
             if self.use_dropout:
-               pass
+                last_out, cache['drop'+str(i+1)] = dropout_forward(last_out, self.dropout_param)
 
         # Last layer
         i += 1
@@ -222,6 +221,10 @@ class FullyConnectedNet(object):
         # For hidden layers
         while i > 0:
             i -= 1
+
+            if self.use_dropout:
+                dx = dropout_backward(dx, cache['drop'+str(i+1)])
+
             dx = relu_backward(dx, cache['relu' + str(i+1)])
 
             if self.normalization == 'batchnorm':
@@ -233,7 +236,6 @@ class FullyConnectedNet(object):
                 grads['gamma'+str(i+1)] = dgamma
                 grads['beta'+str(i+1)] = dbeta
 
-            # TODO: gradients for dropout
             dx, dw, db = affine_backward(dx, cache['a' + str(i+1)])
             reg_term = self.reg * self.params['W' + str(i+1)]
             grads['W' + str(i+1)], grads['b' + str(i+1)] = dw + reg_term, db
