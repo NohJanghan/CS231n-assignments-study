@@ -293,6 +293,7 @@ $RECYCLE.BIN/
 assignment1/cs231n/datasets
 assignment1/cs231n/saved
 assignment2/cs231n/datasets
+assignment2/cs231n/im2col_cython.c
 assignment3/cs231n/datasets/coco_captioning
 assignment3/data
 assignment3/cs231n/datasets/*
